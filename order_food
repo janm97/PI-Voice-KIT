@@ -1,15 +1,42 @@
 url = "https://docs.google.com/forms/d/e/1FAIpQLSc2L11swRRs95mcOqF3yHoanqNOnAsucEnv3nP43941czfKHg/formResponse"
-
-print("Hallo, gerne nehme ich heute deine Bestellung fuer Flo's Fett Restaurant auf, hierführ benötige ich ein paar Infos von dir. Auf welchem Namen soll ich bestellen: ")
-name = input("Name: ")
-time = input("Super " + name + " für welche Uhrzeit soll ich bestellen? ")
-order = input("Ok, was soll ich dir für " + time + " bestellen? ")
-
-value_name = name
-value_time = time
-value_order = order
-
-submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
-
 import requests
-requests.post(url, submission)
+
+
+
+print("Hallo, gerne nehme ich heute deine Bestellung fuer Flo's Fett Restaurant auf, hierführ benötige ich ein paar Infos von dir.") 
+name = input("Auf welchen Namen soll ich bestellen? ") 
+time = input("Super " + name + " für welche Uhrzeit soll ich bestellen? ")
+order = input("Ok, was soll ich dir für " + time + " bestellen? ") 
+print("Ok " + name + "ich bestelle dir " + order + "für " + time)	
+bestellen = input("Soll ich diese bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+
+if bestellen == "Ja":
+	value_name = name
+	value_time = time
+	value_order = order
+	submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
+	requests.post(url, submission)
+
+else:
+	ändern = input("Welchen Teil der Bestellung würdest du gerne ändern, Zeit? Name? oder Bestellung?")
+	if ändern == "Zeit":
+		time = input("Ok, für welche Uhrzeit soll ich bestellen? ")
+		value_name = name
+		value_time = time
+		value_order = order
+		submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
+		requests.post(url, submission)
+	elif ändern == "Name":
+		name = input("Ok, für welchen Namen soll ich bestellen? ")
+		value_name = name
+		value_time = time
+		value_order = order
+		submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
+		requests.post(url, submission)
+	else:
+		order = input("Ok, was soll ich für dich bestellen? ")
+		value_name = name
+		value_time = time
+		value_order = order
+		submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
+		requests.post(url, submission)
