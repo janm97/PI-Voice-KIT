@@ -10,15 +10,20 @@ print("Hallo, gerne nehme ich heute deine Bestellung fuer Flo's Fett Restaurant 
 name = input("Auf welchen Namen soll ich bestellen? ") 
 time = input("Super " + name.split(" ")[0] + ", für welche Uhrzeit soll ich bestellen? ")
 order = input("Ok, was soll ich dir für " + time + " bestellen? ") 
-bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + "Soll ich diese bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
-while bestellen == "Nein":
-	change = input("Welchen Teil der Bestellung würdest du gerne ändern, Zeit? Name? oder Bestellung?")
-	if change == "Zeit":
-		time = input("Ok, für welche Uhrzeit soll ich bestellen? ")
-	elif change == "Name":
-		name = input("Ok, für welchen Namen soll ich bestellen? ")
-	else:
-		order = input("Ok, was soll ich für dich bestellen? ")
-	bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
 
+while bestellen not in ("Ja","Nein","ja","nein"):
+	bestellen = input("Entschuldigung, leider verstehe ich das nicht. Bitte antworte mit Ja oder Nein. ")
+	while bestellen in ("Nein","nope"):
+		change = input("Welchen Teil der Bestellung würdest du gerne ändern, Uhrzeit? Name? oder Bestellung? ")
+		if change == "Zeit":
+			time = input("Ok, für welche Uhrzeit soll ich bestellen? ")
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+		elif change == "Name":
+			name = input("Ok, für welchen Namen soll ich bestellen? ")
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+		else:
+			order = input("Ok, was soll ich für dich bestellen? ")
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+			
 order_now(name,time,order)
