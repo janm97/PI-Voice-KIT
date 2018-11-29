@@ -1,29 +1,49 @@
-url = "https://docs.google.com/forms/d/e/1FAIpQLSc2L11swRRs95mcOqF3yHoanqNOnAsucEnv3nP43941czfKHg/formResponse"
+
+#Moni, Phuon Dong, Ente, Da Vicari
+urls = ("https://docs.google.com/forms/d/e/1FAIpQLSc2L11swRRs95mcOqF3yHoanqNOnAsucEnv3nP43941czfKHg/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSfRp70fxAsrgeBSvG8uW4eowFct8F_3Gp3d10IN7Ptmf81rdg/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSeLIK18xfybBgytILmWPvKEUz9roN2xQgYXWT61ivkmVFR-RA/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSehCFVVTMqbx4rF5c8GcvzPiWUlkUrihZU30aVlJd0yRYc3Vg/formResponse")
+restaurant_names = ("Fleischerei Glaß","Phuong Dong","Goldene Ente","Da Vicari")
 import requests
 
 def order_now(name,time,order):
 	value_name, value_time, value_order = name, time, order
-	submission = {"entry.536960079": value_name,"entry.659618339": value_time,"entry.1665018644": value_order}
+	submission = {"entry.536960079": value_name,"entry.1665018644": value_time,"entry.659618339": value_order}
 	requests.post(url, submission)
 
-print("Hallo, gerne nehme ich heute deine Bestellung fuer Flo's Fett Restaurant auf, hierführ benötige ich ein paar Infos von dir.") 
-name = input("Auf welchen Namen soll ich bestellen? ") 
+restaurant = input("Hallo, gerne nehme ich heute deine Bestellung auf. Bei welchem Restaurant würdest du gerne bestellen? ")
+while restaurant not in ("Fondant", "Phuong Dong", "Fleischerei Glas", "Fleischerei Glaß","Fleischerei Klaas", "Moni","Goldene Ente","Da Vicari","1","2","3","4"):
+	restaurant = input ("Entschuldigung, leider verstehe ich das nicht. Bitte Antworte mit dem Namen des Restaurants, oder der dazugehörigen Nummer. Fleischerei Glaß (1), Phuong Dong (2), Goldene Ente (3) oder Da Vicari (4). ")
+if restaurant in ("Fleischerei Glas","Fleischerei Klaas", "Moni", "1", "Fleischerei Glaß"):
+	url = urls[0]
+	restaurant_name = restaurant_names[0]
+elif restaurant in ("Fondant", "Phuong Dong", "2"):
+	url = urls[1]
+	restaurant_name = restaurant_names[1]
+elif restaurant in ("Goldene Ente","3"):
+	url = urls[2]
+	restaurant_name = restaurant_names[2]
+elif restaurant in ("Da Vicari", "4"):
+	
+	url = urls[3]
+	restaurant_name = restaurant_names[3]	
+
+name = input("Auf welchen Namen soll ich  bei " + restaurant_name + " bestellen? ") 
 time = input("Super " + name.split(" ")[0] + ", für welche Uhrzeit soll ich bestellen? ")
 order = input("Ok, was soll ich dir für " + time + " bestellen? ") 
-bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + " bei " + restaurant_name + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
 
-while bestellen not in ("Ja","Nein","ja","nein"):
-	bestellen = input("Entschuldigung, leider verstehe ich das nicht. Bitte antworte mit Ja oder Nein. ")
+while bestellen not in ("Ja","ja"):
+	if bestellen not in ("Nein","nein","Ja","ja"):
+		bestellen = input("Entschuldigung, leider verstehe ich das nicht. Bitte antworte mit Ja oder Nein. ")
 	while bestellen in ("Nein","nope"):
 		change = input("Welchen Teil der Bestellung würdest du gerne ändern, Uhrzeit? Name? oder Bestellung? ")
 		if change == "Zeit":
 			time = input("Ok, für welche Uhrzeit soll ich bestellen? ")
-			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + " bei " + restaurant_name + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
 		elif change == "Name":
 			name = input("Ok, für welchen Namen soll ich bestellen? ")
-			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + " bei " + restaurant_name + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
 		else:
 			order = input("Ok, was soll ich für dich bestellen? ")
-			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
-			
+			bestellen = input("Ok " + name + ", ich bestelle dir " + order + " für " + time + " bei " + restaurant_name + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+
 order_now(name,time,order)
