@@ -1,0 +1,32 @@
+from __future__ import print_function
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import file, client, tools
+import datetime
+
+def main():
+
+    store = file.Storage('token.json')
+    creds = store.get()
+    if not creds or creds.invalid:
+        flow = client.flow_from_clientsecrets('/Users/janikhasselkus/Documents/Vallerlunch/credentials.json')
+        creds = tools.run_flow(flow, store)
+    service = build('sheets', 'v4', http=creds.authorize(Http()))
+
+    Wochentag = datetime.datetime.today().weekday()
+    
+    # Call the Sheets API
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId='1L8iW0XU-bFhpR3Pln0jIBgCBPyFiju8cor8_KugeNRs',
+                                range='Restaurant!A2:H7').execute()
+    values = result.get('values', [])
+
+    if not values:
+        print('Momentan kein Essensplan hochgeladen.')
+    else: 
+        print('Heute gibt es die folgenden Gerichte.')
+        for row in values:
+            print('%s: %s' % (row[0], row[Wochentag + 1]))
+
+if __name__ == '__main__':
+    main()
