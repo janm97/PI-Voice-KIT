@@ -1,45 +1,169 @@
+import logging
+import sys
 import requests
-urls = ("https://docs.google.com/forms/d/e/1FAIpQLSc2L11swRRs95mcOqF3yHoanqNOnAsucEnv3nP43941czfKHg/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSfRp70fxAsrgeBSvG8uW4eowFct8F_3Gp3d10IN7Ptmf81rdg/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSeLIK18xfybBgytILmWPvKEUz9roN2xQgYXWT61ivkmVFR-RA/formResponse","https://docs.google.com/forms/d/e/1FAIpQLSehCFVVTMqbx4rF5c8GcvzPiWUlkUrihZU30aVlJd0yRYc3Vg/formResponse")
-restaurant_names = ("Fleischerei Glaß","Phuong Dong","Goldene Ente","Da Vicari")
+from time import sleep
 
-def order_now(name,time,order):
-	value_name, value_time, value_order = name, time, order
-	submission = {"entry.536960079": value_name,"entry.1665018644": value_time,"entry.659618339": value_order}
-	requests.post(url, submission)
+from google.assistant.library.event import EventType
 
-def confirm_order(name,order,time,restaurant_name):
-	return input("Ok " + name + ", ich bestelle dir " + order + " für " + time + " bei " + restaurant_name + ". Soll ich diese Bestellung für dich tätigen? Bitte Antworte mit Ja oder Nein. ")
+from aiy.assistant import auth_helpers
+from aiy.assistant.library import Assistant
+from aiy.board import Board, Led
+from aiy.cloudspeech import CloudSpeechClient
+from aiy.voice.tts import say
 
-restaurant = input("Hallo, gerne nehme ich heute deine Bestellung auf. Bei welchem Restaurant würdest du gerne bestellen? ")
-while restaurant not in ("Fondant", "Phuong Dong", "Fleischerei Glas", "Fleischerei Glaß","Fleischerei Klaas", "Moni","Goldene Ente","Da Vicari","1","2","3","4"):
-	restaurant = input ("Entschuldigung, leider verstehe ich das nicht. Bitte Antworte mit dem Namen des Restaurants, oder der dazugehörigen Nummer. Fleischerei Glaß (1), Phuong Dong (2), Goldene Ente (3) oder Da Vicari (4). ")
-if restaurant in ("Fleischerei Glas","Fleischerei Klaas", "Moni", "1", "Fleischerei Glaß"):
-	url, restaurant_name = urls[0], restaurant_names[0]
-elif restaurant in ("Fondant", "Phuong Dong", "2"):
-	url, restaurant_name = urls[1], restaurant_names[1]
-elif restaurant in ("Goldene Ente","3"):
-	url, restaurant_name = urls[2], restaurant_names[2]
-elif restaurant in ("Da Vicari", "4"):
-	url, restaurant_name = urls[3], restaurant_names[3]
+speed = 150
 
-name = input("Auf welchen Namen soll ich  bei " + restaurant_name + " bestellen? ") 
-time = input("Super " + name.split(" ")[0] + ", für welche Uhrzeit soll ich bestellen? ")
-order = input("Ok, was soll ich dir für " + time + " bestellen? ") 
-bestellen = confirm_order(name,order,time,restaurant_name)
+state = {}
 
-while bestellen not in ("Ja","ja"):
-	if bestellen not in ("Nein","nein","Ja","ja"):
-		bestellen = input("Entschuldigung, leider verstehe ich das nicht. Bitte antworte mit Ja oder Nein. ")
-	while bestellen in ("Nein","nope"):
-		change = input("Welchen Teil der Bestellung würdest du gerne ändern, Uhrzeit? Name? oder Bestellung? ")
-		if change == "Uhrzeit":
-			time = input("Ok, für welche Uhrzeit soll ich bestellen? ")
-			bestellen = confirm_order(name,order,time,restaurant_name)
-		elif change == "Name":
-			name = input("Ok, für welchen Namen soll ich bestellen? ")
-			bestellen = confirm_order(name,order,time,restaurant_name)
-		else:
-			order = input("Ok, was soll ich für dich bestellen? ")
-			bestellen = confirm_order(name,order,time,restaurant_name)
+restaurants = (
+    ("Fleischerei Glas", "https://docs.google.com/forms/d/e/1FAIpQLSc2L11swRRs95mcOqF3yHoanqNOnAsucEnv3nP43941czfKHg/formResponse", "1", "Fleischerei Glaß", "Fleischerei Klaas", "Moni"),
+    ("Phuong Dong", "https://docs.google.com/forms/d/e/1FAIpQLSfRp70fxAsrgeBSvG8uW4eowFct8F_3Gp3d10IN7Ptmf81rdg/formResponse","2", "Fondant"),
+    ("Goldene Ente","https://docs.google.com/forms/d/e/1FAIpQLSeLIK18xfybBgytILmWPvKEUz9roN2xQgYXWT61ivkmVFR-RA/formResponse", "3"),
+    ("Da Vicari", "https://docs.google.com/forms/d/e/1FAIpQLSehCFVVTMqbx4rF5c8GcvzPiWUlkUrihZU30aVlJd0yRYc3Vg/formResponse","4")
+)
 
-order_now(name,time,order)
+hint_phrases = (
+    "Fleischerei Glas", "Fleischerei Glaß", "Fleischerei Klaas", "Moni", "1",
+    "Phuong Dong", "Fondant", "2",
+    "Goldene Ente", "3",
+    "Da Vicari", "4",
+    "Jan Moelich", "Jan",
+    "Bob Miller",
+    "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00",
+    "yes","yeah","no","nope",
+    "time","name","order"
+    )
+
+name, time, restaurant,order, url = "", "", "", "", ""
+
+def order_now(name,time,order,url):
+    value_name, value_time, value_order = name, time, order
+    submission = {"entry.536960079": value_name,"entry.1665018644": value_time,"entry.659618339": value_order}
+    requests.post(url, submission)
+
+def confirm_order(name,order,time,restaurant):
+    client = CloudSpeechClient()
+    say("Ok " + name + ", I am ordering " + order + "for " + time + "at " + restaurant + ". Would you like me to submit this order? Please answer with yes or no. ")
+    text = client.recognize(hint_phrases=hint_phrases)
+    print("Confirm order: " + str(text))
+    if text != None:
+        bestellen = text.lower()
+    return bestellen    
+    
+def which_restaurant(urls):
+    client = CloudSpeechClient()
+    say("Hi there, I am happy to take your order today. What restaurant would you like to order at?")
+    text = client.recognize(hint_phrases=hint_phrases)
+    print(str(text) + " -- Before parsing")
+    if text != None:
+        text = text.lower()
+    print(text)
+    while text not in ("fondant", "phuong dong", "fleischerei glas", "gleischerei glaß","fleischerei klaas", "moni","goldene ente","da vicari","1","2","3","4"):
+            say("Excuse me, I did not understand that. Please answer with the name of the restaurant, or the corresponding number. Fleischerei Glaß (1), Phuong Dong (2), Goldene Ente (3) or Da Vicari (4). ")
+            text = client.recognize(hint_phrases=hint_phrases)
+            text = text.lower()
+            print(text)
+    if text in ("fleischerei glas", "gleischerei glaß","fleischerei klaas", "moni", "1"):
+            url, restaurant = urls[0][1], restaurants[0][0]
+            print(url + " -- " +  restaurant)
+            return url, restaurant
+    elif text in ("fondant", "phuong dong", "2"):
+            url, restaurant = urls[1][1], restaurants[1][0]
+            print(url + " -- " +  restaurant)
+            return url, restaurant
+    elif text in ("goldene ente","3"):
+            url, restaurant = urls[2][1], restaurants[2][0]
+            print(url + " -- " +  restaurant)
+            return url, restaurant
+    elif text in ("da vicari", "4"):
+            url, restaurant = urls[3][1], restaurants[3][0]
+            print(url + " -- " +  restaurant)
+            return url, restaurant
+
+
+
+def which_name(restaurant):
+    client = CloudSpeechClient()
+    print("Restaurant at name stage: " + restaurant)
+    say("Great! What name should I order for at " + str(restaurant))
+    text = client.recognize(hint_phrases=hint_phrases)
+    print("Name: " + str(text))
+    if text != None:
+        name = text.lower()
+    return name
+
+def which_time(name):
+    client = CloudSpeechClient()
+    say("Ok " + name.split(" ")[0] + ", what time would you like me to order for?")
+    text = client.recognize(hint_phrases=hint_phrases)
+    print("Time: " + str(text))
+    if text != None:
+        time = text.lower()
+    return time
+
+def which_order(time):
+    client = CloudSpeechClient()
+    say("Great, what would you like me to order for " + time )
+    text = client.recognize(hint_phrases=hint_phrases)
+    print("Order: " + str(text))
+    if text != None:
+        order = text.lower()
+    print("Order after parsing: " + order)    
+    return order
+
+def order_conformation(name,order,time,restaurant):
+    print("In Loop: -- Name: " + name + " - Order: " + order + " - Time: " + time + " - Restaurant: " + restaurant)
+    client = CloudSpeechClient()
+    bestellen = confirm_order(name,order,time,restaurant)
+    while bestellen not in ("yes","yeah"):
+        print("Bestellen: " + bestellen)
+        if bestellen not in ("yeah","yes","nope","no"):
+                say("Excuse me, I did not understand that. Please answer with yes or no.")
+                text = client.recognize(hint_phrases=hint_phrases)
+                print("Order confirmed?: " + str(text))
+                if text != None:
+                    bestellen = text.lower()
+        while bestellen in ("no","nope"):
+                say("Ok, which part of the order would you like to change? time, name or order?")
+                text = client.recognize(hint_phrases=hint_phrases)
+                print("Change order: " + str(text))
+                if text != None:
+                    change = text.lower()
+                if change == "time":
+                        say("Ok, what time would you like me to order for?")
+                        text = client.recognize(hint_phrases=hint_phrases)
+                        print("Changed time: " + str(text))
+                        if text != None:
+                            time = text.lower()
+                        bestellen = confirm_order(name,order,time,restaurant)
+                elif change == "name":
+                        say("Ok, what name should I order on?")
+                        text = client.recognize(hint_phrases=hint_phrases)
+                        print("Changed name: " + str(text))
+                        if text != None:
+                            name = text.lower()
+                        bestellen = confirm_order(name,order,time,restaurant)
+                else:
+                        say("Ok, what would you like to order?")
+                        text = client.recognize(hint_phrases=hint_phrases)
+                        print("Changed order: " + str(text))
+                        if text != None:
+                            order = text.lower()
+                        bestellen = confirm_order(name,order,time,restaurant)
+        print("End of conformation Loop")
+    print("Submit order without change")    
+    return time,name,order	
+
+
+
+
+def order_process():
+    url, restaurant = which_restaurant(restaurants)
+    name = which_name(restaurant)
+    time = which_time(name)
+    order = which_order(time)
+    print("Name: " + name + " - Order: " + order + " - Time: " + time + " - Restaurant: " + restaurant)
+    time, name, order = order_conformation(name,order,time,restaurant)
+    order_now(name,time,order,url)
+    
+order_process()
